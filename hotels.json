@@ -1,0 +1,355 @@
+{
+ "Heraa": {
+  "label": "Heraa",
+  "city": "Jeddah",
+  "kind": "Hotel",
+  "lat": 21.6139,
+  "lon": 39.1566,
+  "radius": 1.5,
+  "agoda_area": 495879,
+  "agoda_own": 28112909,
+  "google": [
+   {
+    "key": "OWN",
+    "name": "Swiss Blue Heraa (us)",
+    "id": "ChoIu4C35dXt1ffAARoNL2cvMTFubjMyc2Q2YxAB",
+    "seg": "own",
+    "km": 0
+   },
+   {
+    "key": "H_CARAWAN",
+    "name": "Carawan Hotel Jeddah",
+    "id": "ChoI_MzM9Z3f7KuzARoNL2cvMTFsMzVuejgwdxAB",
+    "seg": "direct",
+    "km": 0.6
+   },
+   {
+    "key": "H_JASMINE",
+    "name": "Jasmine Garden Hotel",
+    "id": "ChoIn6rFnYn7uZHbARoNL2cvMTF0ZDIxM24yMhAB",
+    "seg": "direct",
+    "km": 0.6
+   },
+   {
+    "key": "H_WOW",
+    "name": "WOW _ JEDDAH HOTEL",
+    "id": "ChoIve7ShtzjzqDwARoNL2cvMTFoendyenp6MBAB",
+    "seg": "direct",
+    "km": 0.7
+   },
+   {
+    "key": "H_GLADIOLUS",
+    "name": "Gladiolus hotel",
+    "id": "ChoI_La86fOXtOSPARoNL2cvMTFzN3JrNG16ahAB",
+    "seg": "direct",
+    "km": 1.0
+   },
+   {
+    "key": "H_PALMBOUTIQUE",
+    "name": "Palm Boutique Hotel",
+    "id": "ChkI0PHA-86n9YM_Gg0vZy8xMWNtcXdra2ZwEAE",
+    "seg": "direct",
+    "km": 1.1
+   },
+   {
+    "key": "H_TUVANA",
+    "name": "Tuvana hotel",
+    "id": "ChoI-Mj7roKqq6uvARoNL2cvMTF4cmxiZDFfMBAB",
+    "seg": "direct",
+    "km": 2.1
+   },
+   {
+    "key": "H_BESTLEVEL",
+    "name": "فندق بيست ليفل جدة حي السلامة",
+    "id": "ChkI1Y_2kdvW-qc6Gg0vZy8xMWtzNm1nMHl0EAE",
+    "seg": "direct",
+    "km": 2.1
+   },
+   {
+    "key": "H_LAYALILAMAR",
+    "name": "فندق ليالي لمار البوادي",
+    "id": "ChkI9byKwOj_nKYFGg0vZy8xMWg3ZzNoaGYxEAE",
+    "seg": "direct",
+    "km": 3.0
+   },
+   {
+    "key": "H_MOVENPICK",
+    "name": "Mövenpick Jeddah City Star",
+    "id": "ChkI6anRjZ_VqctwGg0vZy8xMWNud2c1ampfEAE",
+    "seg": "indirect",
+    "km": 0.9
+   },
+   {
+    "key": "H_HIGATEWAY",
+    "name": "Holiday Inn Jeddah Gateway by IHG",
+    "id": "ChkIib2TuqGtneVaGg0vZy8xMWJicmc2eF9jEAE",
+    "seg": "indirect",
+    "km": 1.4
+   },
+   {
+    "key": "H_CENTRO",
+    "name": "Centro Salama by Rotana",
+    "id": "ChkI3fCnuPHThtccGg0vZy8xMWMycGIyX2QwEAE",
+    "seg": "indirect",
+    "km": 3.2
+   }
+  ],
+  "agoda_city": 9777
+ },
+ "Alzahraa": {
+  "label": "Alzahraa",
+  "city": "Jeddah",
+  "kind": "Serviced apartments",
+  "lat": 21.5892,
+  "lon": 39.1432,
+  "radius": 1.5,
+  "agoda_area": 495952,
+  "agoda_own": 3000966,
+  "google": [
+   {
+    "key": "OWN",
+    "name": "Swiss Blue Alzahraa (us)",
+    "id": "ChkIoa7Qntbbnu4qGg0vZy8xMWdjMjZqc3E1EAE",
+    "seg": "own",
+    "km": 0
+   },
+   {
+    "key": "A_LOTAZ",
+    "name": "Lotaz Hotel",
+    "id": "ChkIzqH85KXKnaghGg0vZy8xMWgwMmwzNGwyEAE",
+    "seg": "direct",
+    "km": 0.2
+   },
+   {
+    "key": "A_FRIESIAN",
+    "name": "Friesian Apparments",
+    "id": "ChoIh_rfwYeCt9GwARoNL2cvMTFsdDAxMGxibBAB",
+    "seg": "direct",
+    "km": 0.6
+   },
+   {
+    "key": "A_WOWZAHRA",
+    "name": "Wow Al Zahra Apartments",
+    "id": "ChkItvXV26SM--9ZGg0vZy8xMW03OHZfM3hzEAE",
+    "seg": "direct",
+    "km": 0.8
+   },
+   {
+    "key": "A_SUNPARK",
+    "name": "Sun Park Hotel Apartments",
+    "id": "ChkItMfq3deQ_MRcGg0vZy8xMWYyOV8weTVsEAE",
+    "seg": "direct",
+    "km": 0.9
+   },
+   {
+    "key": "A_BOUDLQURAISH",
+    "name": "Boudl Quraish",
+    "id": "ChkIv8H3p9O___9LGg0vZy8xMWY1dF8yY242EAE",
+    "seg": "direct",
+    "km": 1.0
+   },
+   {
+    "key": "A_GARDENMILL",
+    "name": "Gardn Millennium Al-Salamah Hotel",
+    "id": "ChkItb249bT-w7Y4Gg0vZy8xMXkzaHA4N2Q5EAE",
+    "seg": "direct",
+    "km": 1.2
+   },
+   {
+    "key": "A_MIRADAPURPLE",
+    "name": "Mirada Purple - Zahra",
+    "id": "ChkI4JzTjYPGyLELGg0vZy8xMXJrYnNzMThmEAE",
+    "seg": "direct",
+    "km": 1.2
+   },
+   {
+    "key": "A_PRIMOTELSUITES",
+    "name": "PRIMOTEL Suites As Salamah",
+    "id": "ChoIydPR6oim9vGFARoNL2cvMTF2bHZydGR3ZhAB",
+    "seg": "direct",
+    "km": 1.3
+   },
+   {
+    "key": "A_LOREN",
+    "name": "Loren Serviced Apartments",
+    "id": "ChkIg9_bsbm11c56Gg0vZy8xMWI3M2xzNnkzEAE",
+    "seg": "direct",
+    "km": 1.9
+   },
+   {
+    "key": "A_HYATTHOUSE",
+    "name": "Hyatt House Jeddah Sari Street",
+    "id": "ChkI6tGu_uforIMMGg0vZy8xMWY0d3NydGMyEAE",
+    "seg": "indirect",
+    "km": 1.6
+   },
+   {
+    "key": "A_ADAGIOMALIK",
+    "name": "Adagio Aparthotel Jeddah Malik Road",
+    "id": "ChkI94Ovmqb7iLRhGg0vZy8xMWdnX3RkYmt2EAE",
+    "seg": "indirect",
+    "km": 2.7
+   }
+  ],
+  "agoda_city": 9777
+ },
+ "Vinas": {
+  "label": "Vinas",
+  "city": "Riyadh",
+  "kind": "Serviced apartments",
+  "lat": 24.771487,
+  "lon": 46.777268,
+  "radius": 2.0,
+  "agoda_area": 496004,
+  "agoda_own": 450506,
+  "google": [
+   {
+    "key": "OWN",
+    "name": "Swiss Blue Vinas (us)",
+    "id": "ChgIm_yC1pHd59BRGgwvZy8xMmpzazcwczEQAQ",
+    "seg": "own",
+    "km": 0
+   },
+   {
+    "key": "lyvan",
+    "name": "Lyvan Hotel Apartments",
+    "id": "ChoI0rzK2trx3qbqARoNL2cvMTF5cmg3bDA0cxAB",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "myrtle",
+    "name": "Myrtle Serviced Apartments",
+    "id": "ChkI5t-Rprfprs5sGg0vZy8xMWZwcXQyXzBwEAE",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "lamar",
+    "name": "Lamar Furnished Residential Units",
+    "id": "ChkIhayXtJ_Qy_QKGg0vZy8xMWRfOG0wbGpjEAE",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "manazilna",
+    "name": "Manazilna Apartments Riyadh",
+    "id": "ChkIxZng-r6emKWcARoML2cvMXBwMnRfOGptEAE",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "restnight",
+    "name": "Rest Night Hotel Suites / Serviced Apartments Al Hamra",
+    "id": "ChoIl8z_9PK6wcb4ARoNL2cvMTF6N2NsenpjZhAB",
+    "seg": "direct",
+    "km": 2.6
+   },
+   {
+    "key": "yas",
+    "name": "Yas Hotel Apartments",
+    "id": "ChkIvuK1ktbuseA2Gg0vZy8xMXN5eGQ1eTdwEAE",
+    "seg": "direct",
+    "km": 2.8
+   },
+   {
+    "key": "goldentulip_hamra",
+    "name": "Golden Tulip Riyadh",
+    "id": "ChkI8OqLgOvrs4lWGg0vZy8xMXA0Z3A1bjJkEAE",
+    "seg": "indirect",
+    "km": 0.9
+   },
+   {
+    "key": "prime_hamra",
+    "name": "Prime Al Hamra Hotel",
+    "id": "ChoI9-ef6t-687DHARoNL2cvMTFtbHNuOThrORAB",
+    "seg": "indirect",
+    "km": 1.3
+   },
+   {
+    "key": "braira_yarmouk",
+    "name": "Braira Al Yarmouk",
+    "id": "ChoI_orA996x9cTVARoNL2cvMTFkeDloaGN5cBAB",
+    "seg": "indirect",
+    "km": 2.7
+   }
+  ],
+  "agoda_city": 5349
+ },
+ "Tulip": {
+  "label": "Tulip",
+  "city": "Riyadh",
+  "kind": "Serviced apartments",
+  "lat": 24.73318,
+  "lon": 46.78437,
+  "radius": 3.0,
+  "agoda_area": 515109,
+  "agoda_own": 439457,
+  "google": [
+   {
+    "key": "OWN",
+    "name": "Swiss Blue Tulip (us)",
+    "id": "ChkI97DsoJ2Nq4vTARoML2cvMTJ2dDM0a2RwEAE",
+    "seg": "own",
+    "km": 0
+   },
+   {
+    "key": "towlan_rawdah",
+    "name": "Towlan Al Rawdah Serviced Apartments",
+    "id": "ChoI6_nS3aHH0sGbARoNL2cvMTFnYnR6dDMyNBAB",
+    "seg": "direct",
+    "km": 1.5
+   },
+   {
+    "key": "dara_rayyan",
+    "name": "Dara Al Rayyan Serviced Apartments",
+    "id": "ChkI8_njst-stI5AGg0vZy8xMXNmYndoaHEyEAE",
+    "seg": "direct",
+    "km": 2.1
+   },
+   {
+    "key": "towlan_rayan",
+    "name": "Towlan El Rayan",
+    "id": "ChoIi9vdqb6A7uKVARoNL2cvMTF4cmxfenJoNRAB",
+    "seg": "direct",
+    "km": 3.1
+   },
+   {
+    "key": "lyvan",
+    "name": "Lyvan Hotel Apartments",
+    "id": "ChoI0rzK2trx3qbqARoNL2cvMTF5cmg3bDA0cxAB",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "manazilna",
+    "name": "Manazilna Apartments Riyadh",
+    "id": "ChkIxZng-r6emKWcARoML2cvMXBwMnRfOGptEAE",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "lamar",
+    "name": "Lamar Furnished Residential Units",
+    "id": "ChkIhayXtJ_Qy_QKGg0vZy8xMWRfOG0wbGpjEAE",
+    "seg": "direct",
+    "km": null
+   },
+   {
+    "key": "aw_hotel",
+    "name": "AW Hotel Riyadh",
+    "id": "ChkI_fLsrsm_8YQcGg0vZy8xMXc5NnYwOG15EAE",
+    "seg": "indirect",
+    "km": null
+   },
+   {
+    "key": "boudl_gaber",
+    "name": "Boudl Gaber Serviced Apartments",
+    "id": "ChoIi7KAmsDk6eSfARoNL2cvMTFienJrX2JjNxAB",
+    "seg": "indirect",
+    "km": 7.6
+   }
+  ],
+  "agoda_city": 5349
+ }
+}

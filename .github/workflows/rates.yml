@@ -1,0 +1,71 @@
+# rates.swissblue.sa robot: 31 nights of competitor prices per hotel from Booking.com, Agoda and Google Hotels
+# (Expedia, Hotels.com, Trip.com), then build the multi-page site and deploy it to Vercel project swissblue-rates.
+# Public repo = unlimited free GitHub Actions minutes. Needs repository secret VERCEL_TOKEN.
+# The site's "Sync now" button starts this workflow (Vercel env GH_TOKEN, Actions read/write on this repo).
+name: rates
+
+on:
+  schedule:
+    - cron: "17 */8 * * *"      # 03:17, 11:17, 19:17 Riyadh (GitHub may start it a little later)
+  workflow_dispatch:
+
+concurrency:
+  group: rates-site
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        hotel: [Heraa, Alzahraa, Vinas, Tulip]
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Collect 31 nights (Booking.com, Agoda, Google Hotels)
+        timeout-minutes: 38
+        continue-on-error: true
+        run: |
+          npm i --no-save --silent playwright-core@1.47.2
+          mkdir -p raw
+          node collect.cjs ${{ matrix.hotel }} raw/${{ matrix.hotel }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raw-${{ matrix.hotel }}
+          path: raw/${{ matrix.hotel }}.json
+          retention-days: 3
+
+  publish:
+    needs: collect
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_ORG_ID: team_HYBx4XcaN8YFB1GItHJNrWhS
+      VERCEL_PROJECT_ID: prj_XoWhpUoAoZ3NfbQZJswHxaplMCap
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: raw-*
+          merge-multiple: true
+          path: raw
+      - name: Build (a source that failed keeps its last good table)
+        run: |
+          [ -n "${{ secrets.VERCEL_TOKEN }}" ] || { echo "::error::missing repository secret VERCEL_TOKEN"; exit 1; }
+          mkdir -p prev out
+          for h in heraa alzahraa vinas tulip; do curl -fsS "https://rates.swissblue.sa/data/$h.json" -o "prev/$h.json" || rm -f "prev/$h.json"; done
+          python3 build.py raw prev out
+          cp -r site/assets site/api site/vercel.json site/robots.txt out/
+      - name: Deploy to Vercel (production)
+        working-directory: out
+        run: npx --yes vercel@latest deploy --prod --yes --token "${{ secrets.VERCEL_TOKEN }}" > /tmp/deploy-url.txt && echo deployed
