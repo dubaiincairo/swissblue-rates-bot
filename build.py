@@ -63,7 +63,7 @@ def t_booking(k, raw):
     return {'own': own, 'rows': sorted(rows.values(), key=lambda e: e['km']), 'ok': ok}
 
 def t_agoda(k, raw):
-    h = H[k]; own, rows = {}, {}; rad = max(h['radius'], 2.0)
+    h = H[k]; own, rows = {}, {}; rad = h['radius']
     for r in raw.get('agoda') or []:
         d = r.get('date')
         for c in r.get('cards') or []:
@@ -157,7 +157,7 @@ def table(tab, dates, label, src_name, rowlink):
         return out
     us = f'<tr class="usr"><th scope="row" class="nm"><span>Us: {E(label)}</span></th>{cells(None, True)}</tr>'
     mr = ''.join((f'<td class="n{" we" if datetime.date.fromisoformat(d).weekday() in (3, 4) else ""}">{mid[d][0]}<small>{mid[d][1]}</small></td>' if d in mid else '<td class="n na">–</td>') for d in dates)
-    midrow = f'<tr class="mid"><th scope="row" class="nm"><span>Middle of the others <small>(how many)</small></span></th>{mr}</tr>'
+    midrow = f'<tr class="mid"><th scope="row" class="nm"><span>Competitors’ middle price <small>(how many places)</small></span></th>{mr}</tr>'
     rows = ''
     for e in tab['rows']:
         if not e['p']: continue
@@ -189,18 +189,20 @@ def hotel_page(k, D, nav):
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us that night. <span class="sw we"></span> Shaded columns = Thursday and Friday.'),
             ('Links', 'Click a name or a price to open that place on Booking.com for that night.')]),
         ('agoda', 'All nearby places on Agoda', 'Agoda', [
-            ('Who is compared', f'Every place Agoda shows in the {E(h["label"])} area, within {max(h["radius"], 2):g} km, with guest reviews. Villas, whole houses, chalets and hostels are left out.'),
+            ('Who is compared', f'Every place on Agoda within {h["radius"]:g} km of {E(h["label"])} that has guest reviews. Villas, whole houses, chalets, hostels and 2+ bedroom units are left out.'),
             ('Price shown', "Agoda's cheapest room for that night, 2 adults, <strong>without</strong> VAT and fees (Agoda's own \"price before taxes\")."),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us that night. <span class="sw we"></span> Shaded columns = Thursday and Friday.'),
             ('Links', 'Click a name or a price to open that place on Agoda for that night.')]),
         ('expedia', 'Hand-picked competitors on Expedia', 'Google Hotels', [
             ('Who is compared', 'Hand-picked direct and indirect competitors (pricing doc, section 9).'),
-            ('Price shown', "Expedia's cheapest room for that night (Hotels.com when Expedia has no price; same company), <strong>without</strong> VAT and fees (Google's price ÷ 1.17875). Expedia blocks robots on its own site, so the price is read from Google Hotels."),
+            ('Price shown', "Expedia's cheapest room for that night, <strong>without</strong> VAT and fees. If Expedia has no price that night we show Hotels.com: it belongs to Expedia and sells the same rooms."),
+            ('Where it comes from', "Expedia blocks robots on its own website, so we read Expedia's price from Google Hotels. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875) to compare the same way as the other tables."),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us on Expedia that night.'),
             ('Links', 'Click a name or a price to open Google Hotels for that night: it lists every platform with a "Visit site" button.')]),
         ('avg', 'Average of 5 platforms', 'Google Hotels', [
             ('Who is compared', 'Hand-picked direct and indirect competitors (pricing doc, section 9).'),
-            ('Price shown', 'The average of the cheapest room on <strong>Booking.com, Agoda, Expedia, Hotels.com and Trip.com</strong> (the ones that have a price that night), <strong>without</strong> VAT and fees (Google\'s price ÷ 1.17875). Hover a price to see each platform.'),
+            ('Price shown', 'For each place: the average of its cheapest room on <strong>Booking.com, Agoda, Expedia, Hotels.com and Trip.com</strong> (only the platforms that have a price that night), <strong>without</strong> VAT and fees. Hover a price to see each platform.'),
+            ('Where it comes from', 'Google Hotels, which lists every platform for each place. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875).'),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than our own 5-platform average that night.'),
             ('Links', 'Click a name or a price to open Google Hotels for that night: it lists every platform with a "Visit site" button.')]),
     ]
@@ -219,8 +221,8 @@ def hotel_page(k, D, nav):
     tiles = ''
     for sid, nm in (('booking', 'Booking.com'), ('agoda', 'Agoda'), ('avg', '5-platform average')):
         o, m = kv(sid)
-        tiles += (f'<div class="kpi"><span class="kl">{nm}, tonight</span><span class="kv">{o if o else "–"}</span>'
-                  f'<span class="ks">us · others middle {m[0] if m else "–"}{" (" + str(m[1]) + ")" if m else ""}</span></div>')
+        tiles += (f'<div class="kpi"><span class="kl">{nm}, tonight</span><span class="kv">{o if o else "–"} <small>our price</small></span>'
+                  '<span class="ks">' + ("Competitors’ middle price: <strong>" + str(m[0]) + "</strong> (" + str(m[1]) + " places)" if m else "No competitor prices tonight") + '</span></div>')
     return page(f'{h["label"]} competitor prices', nav, k, f'''
 <header class="hhead"><p class="crumb"><a href="../">All hotels</a> <span aria-hidden="true">›</span> {E(h["label"])}</p>
 <h1>{E(h["label"])} <span class="city">{E(h["city"])} · {E(h["kind"])}</span></h1>
@@ -229,7 +231,7 @@ def hotel_page(k, D, nav):
 <nav class="jump" aria-label="Tables on this page">{jump}</nav></header>
 {"".join(secs)}''', D['updated'])
 
-SYNC = '''<div class="sync" id="sync"><div class="synct"><span class="lbl">Last synced</span> <time id="synced" datetime="{iso}">{txt} Riyadh time</time> <span id="ago" class="ago"></span></div>
+SYNC = '''<div class="sync" id="sync"><div class="synct"><span class="live" aria-hidden="true"></span><span class="lbl">Live · last synced</span> <time id="synced" datetime="{iso}">{txt} Riyadh time</time> <span id="ago" class="ago"></span></div>
 <button type="button" id="syncbtn" class="btn">Sync now</button><p id="syncmsg" class="syncmsg" role="status" aria-live="polite"></p></div>'''
 
 def page(title, nav, active, body, updated, root=False):
@@ -242,7 +244,7 @@ def page(title, nav, active, body, updated, root=False):
 <link rel="stylesheet" href="{pre}assets/site.css"></head><body>
 <div class="bar"><div class="barin"><a class="brand" href="{pre}">Swiss Blue <span>rates</span></a><nav class="htabs" aria-label="Hotels">{tabs}</nav></div></div>
 <main>{sync}{body}</main>
-<footer><p>Data: Booking.com and Agoda searches, and Google Hotels for Expedia, Hotels.com and Trip.com. Updated every 8 hours by a robot; prices can change at any time. Not indexed by search engines.</p></footer>
+<footer><p>Data: Booking.com and Agoda searches, and Google Hotels for Expedia, Hotels.com and Trip.com. Updated every 8 hours by a robot (and whenever someone presses Sync now); prices can change at any time. Not indexed by search engines.</p></footer>
 <script src="{pre}assets/site.js" defer></script></body></html>'''
 
 def home(all_D):
@@ -257,7 +259,7 @@ def home(all_D):
             n = sum(1 for e in tab['rows'] if d0 in e['p'])
             lines += f'<tr><th scope="row">{nm}</th><td>{o or "–"}</td><td>{m[0] if m else "–"}</td><td>{f"{ch} of {n}" if o and n else "–"}</td></tr>'
         cards += f'''<a class="hcard" href="{k.lower()}/"><h2>{E(h["label"])} <span class="city">{E(h["city"])}</span></h2><p class="kind">{E(h["kind"])}</p>
-<table class="mini"><thead><tr><th scope="col">Tonight</th><th scope="col">Us</th><th scope="col">Others, middle</th><th scope="col">Cheaper than us</th></tr></thead><tbody>{lines}</tbody></table>
+<table class="mini"><thead><tr><th scope="col">Tonight</th><th scope="col">Us</th><th scope="col">Competitors\u2019 middle</th><th scope="col">Cheaper than us</th></tr></thead><tbody>{lines}</tbody></table>
 <span class="go">Open {E(h["label"])} calendar →</span></a>'''
     body = f'''<header class="hhead"><p class="eyebrow">Swiss Blue · competitor prices</p><h1>Choose a hotel</h1>
 <p class="intro">Each hotel has its own page with 30-night price calendars on Booking.com, Agoda, Expedia and the average of 5 platforms. SAR per night, 2 adults, without VAT and fees.</p></header>
