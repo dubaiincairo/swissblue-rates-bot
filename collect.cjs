@@ -27,9 +27,15 @@ function gts(ci, co) {
 async function pool(ctx, n, jobs, fn, budgetMin) {
   let i = 0; const out = []; const end = Date.now() + budgetMin * 60e3;
   await Promise.all(Array.from({ length: n }, async () => {
-    const p = await ctx.newPage();
-    while (i < jobs.length && Date.now() < end) { const j = jobs[i++]; try { out.push(await fn(p, j)); } catch (e) { out.push({ ...j, error: e.message.slice(0, 80) }); } }
-    await p.close();
+    let p = await ctx.newPage();
+    while (i < jobs.length && Date.now() < end) {
+      const j = jobs[i++]; let timer;
+      const limit = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('job took over 75 s')), 75e3); });
+      try { out.push(await Promise.race([fn(p, j), limit])); }
+      catch (e) { out.push({ ...j, error: e.message.slice(0, 80) }); if (/75 s/.test(e.message)) { await p.close().catch(() => {}); p = await ctx.newPage(); } }
+      finally { clearTimeout(timer); }
+    }
+    await p.close().catch(() => {});
   }));
   if (i < jobs.length) console.log('time budget reached, skipped', jobs.length - i, 'of', jobs.length);
   return out;
@@ -106,6 +112,8 @@ async function google(p, j) {
   const only = (process.env.ONLY || 'booking,agoda,google').split(',');
   const res = { hotel: KEY, dates: DATES, started: new Date().toISOString() };
   const save = () => fs.writeFileSync(OUTF, JSON.stringify({ ...res, finished: new Date().toISOString() }));
+  // Watchdog: whatever happens, save what we have and stop after 30 minutes (GitHub step limit is 38).
+  setTimeout(() => { console.log('watchdog: 30 minutes reached, saving partial results'); save(); process.exit(0); }, +(process.env.HARD_LIMIT_MIN || 30) * 60e3).unref();
   if (only.includes('booking')) { res.booking = await pool(ctx, 3, DATES, booking, +(process.env.BUDGET_BOOKING || 9)); save(); console.log(KEY, 'booking', res.booking.filter(r => r.cards?.length).length, '/', DATES.length, Math.round((Date.now() - t0) / 1000) + 's'); }
   if (only.includes('agoda')) { res.agoda = await pool(ctx, 4, DATES, agoda, +(process.env.BUDGET_AGODA || 10)); save(); console.log(KEY, 'agoda', res.agoda.filter(r => r.cards?.length).length, '/', DATES.length, Math.round((Date.now() - t0) / 1000) + 's'); }
   if (only.includes('google')) {
