@@ -79,6 +79,23 @@ def t_agoda(k, raw):
     ok = sum(1 for r in raw.get('agoda') or [] if r.get('cards'))
     return {'own': own, 'rows': sorted(rows.values(), key=lambda e: e['km']), 'ok': ok}
 
+def candidates(k, raw):
+    """Places for the Google (Expedia / 5-platform) tables: same quality rules as the tables, up to google_radius km."""
+    h = H[k]; gr = h.get('google_radius', h['radius']); out = {}
+    for r in raw.get('booking') or []:
+        for c in r.get('cards') or []:
+            n, room = (c.get('name') or '').strip(), c.get('room') or ''
+            d = km(c.get('dist'))
+            if not n or OWN.search(n) or d is None or d > gr or BIG.search(room) or BIG.search(n) or score(c.get('score')) is None: continue
+            if n not in out or out[n] > d: out[n] = d
+    for r in raw.get('agoda') or []:
+        for c in r.get('cards') or []:
+            n = c.get('name')
+            if not n or OWN.search(n) or c.get('lat') is None or not c.get('score') or AGODA_SKIP.search(c.get('type') or '') or BIG.search(n): continue
+            d = hav(h['lat'], h['lon'], c['lat'], c['lon'])
+            if d <= gr and (n not in out or out[n] > d): out[n] = d
+    return sorted(({'name': n, 'km': round(d, 2)} for n, d in out.items()), key=lambda x: x['km'])
+
 def google_offers(raw):
     G = {}
     for r in raw.get('google') or []:
@@ -194,13 +211,13 @@ def hotel_page(k, D, nav):
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us that night. <span class="sw we"></span> Shaded columns = Thursday and Friday.'),
             ('Links', 'Click a name or a price to open that place on Agoda for that night.')]),
         ('expedia', 'Nearest places on Expedia', 'Google Hotels', [
-            ('Who is compared', f'The 20 nearest places within {h["radius"]:g} km of {E(h["label"])} (taken from the Booking.com and Agoda lists) that have a Google Hotels page.'),
+            ('Who is compared', f'The 20 nearest places within {h.get("google_radius", h["radius"]):g} km of {E(h["label"])} (taken from the Booking.com and Agoda searches) that have a Google Hotels page. Small private flats often have no Google page, so they cannot appear here.'),
             ('Price shown', "Expedia's cheapest room for that night, <strong>without</strong> VAT and fees. If Expedia has no price that night we show Hotels.com: it belongs to Expedia and sells the same rooms."),
             ('Where it comes from', "Expedia blocks robots on its own website, so we read Expedia's price from Google Hotels. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875) to compare the same way as the other tables."),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us on Expedia that night.'),
             ('Links', 'Click a name or a price to open Google Hotels for that night: it lists every platform with a "Visit site" button.')]),
         ('avg', 'Average of 5 platforms', 'Google Hotels', [
-            ('Who is compared', f'The same 20 nearest places as the Expedia table (within {h["radius"]:g} km).'),
+            ('Who is compared', f'The same 20 nearest places as the Expedia table (within {h.get("google_radius", h["radius"]):g} km).'),
             ('Price shown', 'For each place: the average of its cheapest room on <strong>Booking.com, Agoda, Expedia, Hotels.com and Trip.com</strong> (only the platforms that have a price that night), <strong>without</strong> VAT and fees. Hover a price to see each platform.'),
             ('Where it comes from', 'Google Hotels, which lists every platform for each place. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875).'),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than our own 5-platform average that night.'),
@@ -299,6 +316,8 @@ def main():
             elif prev.get('tables', {}).get(sid):
                 D['tables'][sid] = prev['tables'][sid]; D['updated_by'][sid] = prev['updated_by'].get(sid); D['kept'][sid] = True
             print(k, sid, 'ok', t['ok'], 'kept' if D['kept'].get(sid) else '')
+        cand = candidates(k, raw)
+        D['cands'] = cand if len(cand) >= 10 else (prev.get('cands') or cand)
         D['updated'] = max([v for v in D['updated_by'].values() if v] or [fin])
         all_D[k] = D
     if not all_D: print('nothing to build'); sys.exit(3)

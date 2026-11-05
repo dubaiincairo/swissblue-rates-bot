@@ -154,7 +154,9 @@ async function google(p, j) {
     // nearest places: from the last published Booking.com + Agoda tables of this hotel (within the radius)
     let prev = {}, gmap = {}; try { prev = JSON.parse(fs.readFileSync(process.env.PREV, 'utf8')); } catch {} try { gmap = JSON.parse(fs.readFileSync(process.env.GMAP, 'utf8')); } catch {}
     const seen = new Map();
-    for (const sid of ['booking', 'agoda']) for (const r of (prev.tables?.[sid]?.rows || [])) { const k = toks(r.name).join(' '); if (!k || r.km == null || r.km > h.radius) continue; if (!seen.has(k) || seen.get(k).km > r.km) seen.set(k, { name: r.name, km: r.km }); }
+    const GR = h.google_radius || h.radius;
+    const pool0 = (prev.cands && prev.cands.length) ? prev.cands : ['booking', 'agoda'].flatMap(sid => prev.tables?.[sid]?.rows || []);
+    for (const r of pool0) { const k = toks(r.name).join(' '); if (!k || r.km == null || r.km > GR) continue; if (!seen.has(k) || seen.get(k).km > r.km) seen.set(k, { name: r.name, km: r.km }); }
     const cand = [...seen.values()].sort((a, b) => a.km - b.km);
     const own = h.google.find(c => c.seg === 'own'); const ents = []; const rp = await ctx.newPage(); res.gmap = {};
     const now = Date.now();
