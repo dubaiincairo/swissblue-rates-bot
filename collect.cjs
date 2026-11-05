@@ -103,12 +103,22 @@ function gparse(t) {
   return { offers, mode: t.includes('Nightly total') ? 'total' : (t.includes('Nightly price') ? 'price' : '?') };
 }
 let gcaptcha = 0;
-const STOP = new Set(['hotel', 'hotels', 'apartments', 'apartment', 'serviced', 'suites', 'suite', 'residence', 'residences', 'the', 'by', 'al', 'el', 'and', 'riyadh', 'jeddah', 'units', 'furnished', 'hospitality', 'للشقق', 'المخدومة', 'المخدومه', 'فندق', 'شقق', 'الفندقية']);
+const STOP = new Set(['hotel', 'hotels', 'apartments', 'apartment', 'serviced', 'suites', 'suite', 'residence', 'residences', 'the', 'by', 'al', 'el', 'and', 'riyadh', 'jeddah', 'units', 'furnished', 'hospitality', 'للشقق', 'المخدومة', 'المخدومه', 'فندق', 'شقق', 'الفندقية',
+  // generic words (private flats): never enough on their own to match a Google page
+  'شقة', 'راقية', 'بصالة', 'وغرفة', 'نوم', 'غرفة', 'استديو', 'ستديو', 'مودرن', 'فاخر', 'دخول', 'ذاتي', 'عوائل', 'فندقي', 'studio', 'modern', 'luxury', 'room', 'bedroom', 'with', 'living', 'cozy', 'new', 'style', 'entire', 'private', 'one', 'two', 'district']);
 function toks(n) { return (n || '').toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(w => w.length > 1 && !STOP.has(w)); }
 function same(a, b) { const A = toks(a), B = new Set(toks(b)); if (!A.length || !B.size) return false; const hit = A.filter(w => B.has(w)).length; return hit / A.length >= 0.6 || (hit >= 2 && hit / A.length >= 0.4); }
 async function resolve(p, name) {
-  await p.goto('https://www.google.com/travel/search?q=' + encodeURIComponent(name + ' ' + h.city) + '&hl=en&gl=sa&curr=SAR', { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await sleep(4000);
+  const latin = (name.match(/[A-Za-z][A-Za-z0-9 &'.-]{3,}/g) || []).join(' ').trim();
+  const queries = [name + ' ' + h.city]; if (latin && latin !== name.trim()) queries.push(latin + ' ' + h.city);
+  for (const q of queries) { const r = await resolveQ(p, name, q); if (r !== null) return r; }
+  return null;
+}
+async function resolveQ(p, name, q) {
+  await p.goto('https://www.google.com/travel/search?q=' + encodeURIComponent(q) + '&hl=en&gl=sa&curr=SAR', { waitUntil: 'domcontentloaded', timeout: 45000 });
+  // wait until Google has drawn result links (slower from GitHub's US servers), max 12 s
+  await p.waitForSelector('a[href*="/travel/hotels/entity/Ch"]', { timeout: 12000 }).catch(() => {});
+  await sleep(1000);
   const t = await p.evaluate(() => document.body.innerText.slice(0, 2000));
   if (/unusual traffic|not a robot/i.test(t)) { gcaptcha++; return undefined; }
   const cands = await p.evaluate(() => { const r = [], seen = new Set();
@@ -151,7 +161,7 @@ async function google(p, j) {
     for (const c of cand) {
       if (ents.length >= 20 || gcaptcha >= 3) break;
       let e = gmap[c.name];
-      if (!e || (e.id === null && now - (e.t || 0) > 7 * 864e5)) { let id; try { id = await resolve(rp, c.name); } catch { id = undefined; } if (id === undefined) continue; e = { id, t: now }; }
+      if (!e || (e.id === null && (e.v !== 2 || now - (e.t || 0) > 7 * 864e5))) { let id; try { id = await resolve(rp, c.name); } catch { id = undefined; } if (id === undefined) continue; e = { id, t: now, v: 2 }; }
       res.gmap[c.name] = e;
       if (e.id && e.id !== own.id && !ents.find(x => x.id === e.id)) ents.push({ key: 'g' + ents.length, name: c.name, id: e.id, km: Math.round(c.km * 100) / 100, seg: 'near' });
     }
