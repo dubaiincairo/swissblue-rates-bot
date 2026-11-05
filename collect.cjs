@@ -53,17 +53,26 @@ async function booking(p, d) {
   await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   let cards = [];
   for (let i = 0; i < 20; i++) { await sleep(1000); cards = await p.evaluate(BK_EXTRACT); if (cards.length && i > 3) break; }
-  if (cards.length) { await p.mouse.wheel(0, 6000); await sleep(2000); cards = await p.evaluate(BK_EXTRACT); }
+  if (cards.length) {
+    for (let k = 0; k < 3; k++) {
+      await p.mouse.wheel(0, 8000); await sleep(1500);
+      const more = p.getByRole('button', { name: /Load more results/i }).first();
+      if (k < 2 && await more.count()) { await more.click({ timeout: 3000 }).catch(() => {}); await sleep(2500); }
+    }
+    cards = await p.evaluate(BK_EXTRACT);
+  }
   return { src: 'booking', date: d, cards };
 }
 
 async function agoda(p, d) {
   const props = new Map(); const on = async r => { if (!r.url().includes('/graphql/search')) return; try { const j = await r.json(); const d0 = j?.data || {}; for (const k of Object.keys(d0)) for (const x of (d0[k]?.properties || [])) if (x?.propertyId) props.set(x.propertyId, x); } catch {} };
   p.on('response', on);
-  const url = `https://www.agoda.com/search?area=${h.agoda_area}&selectedproperty=${h.agoda_own}&checkIn=${d}&los=1&rooms=1&adults=2&children=0&currency=SAR&locale=en-us&cid=-1`;
-  await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await sleep(9000);
-  for (let i = 0; i < 3; i++) { await p.mouse.wheel(0, 3000); await sleep(1500); }
+  for (const area of (h.agoda_areas || [h.agoda_area])) {
+    const url = `https://www.agoda.com/search?area=${area}&selectedproperty=${h.agoda_own}&checkIn=${d}&los=1&rooms=1&adults=2&children=0&currency=SAR&locale=en-us&cid=-1`;
+    await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await sleep(9000);
+    for (let i = 0; i < 3; i++) { await p.mouse.wheel(0, 3000); await sleep(1500); }
+  }
   if (!props.has(h.agoda_own)) {  // our listing is not in the area list: open a search for our own property
     await p.goto(`https://www.agoda.com/search?city=${h.agoda_city}&selectedproperty=${h.agoda_own}&checkIn=${d}&los=1&rooms=1&adults=2&children=0&currency=SAR&locale=en-us&cid=-1`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await sleep(7000);
@@ -94,6 +103,21 @@ function gparse(t) {
   return { offers, mode: t.includes('Nightly total') ? 'total' : (t.includes('Nightly price') ? 'price' : '?') };
 }
 let gcaptcha = 0;
+const STOP = new Set(['hotel', 'hotels', 'apartments', 'apartment', 'serviced', 'suites', 'suite', 'residence', 'residences', 'the', 'by', 'al', 'el', 'and', 'riyadh', 'jeddah', 'units', 'furnished', 'hospitality', 'للشقق', 'المخدومة', 'المخدومه', 'فندق', 'شقق', 'الفندقية']);
+function toks(n) { return (n || '').toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter(w => w.length > 1 && !STOP.has(w)); }
+function same(a, b) { const A = toks(a), B = new Set(toks(b)); if (!A.length || !B.size) return false; const hit = A.filter(w => B.has(w)).length; return hit / A.length >= 0.6 || (hit >= 2 && hit / A.length >= 0.4); }
+async function resolve(p, name) {
+  await p.goto('https://www.google.com/travel/search?q=' + encodeURIComponent(name + ' ' + h.city) + '&hl=en&gl=sa&curr=SAR', { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await sleep(4000);
+  const t = await p.evaluate(() => document.body.innerText.slice(0, 2000));
+  if (/unusual traffic|not a robot/i.test(t)) { gcaptcha++; return undefined; }
+  const cands = await p.evaluate(() => { const r = [], seen = new Set();
+    for (const a of document.querySelectorAll('a[href*="/travel/hotels/entity/"]')) { const id = (a.getAttribute('href').match(/entity\/([A-Za-z0-9_-]{10,})/) || [])[1]; if (!id || seen.has(id)) continue; seen.add(id);
+      const lab = (a.getAttribute('aria-label') || '').replace(/^Open | in a new tab\.?$/g, ''); let c = a, nm = lab; for (let i = 0; i < 8 && c && !nm; i++) { const hh = c.querySelector && c.querySelector('h2,h3'); if (hh) nm = hh.innerText; c = c.parentElement; }
+      r.push({ id, name: nm || lab }); } return r; });
+  const hit = cands.find(c => same(name, c.name) || same(c.name, name));
+  return hit ? hit.id : null;
+}
 async function google(p, j) {
   if (gcaptcha >= 3) return { ...j, skipped: true };
   await p.goto(`https://www.google.com/travel/hotels/entity/${j.id}/prices?hl=en&gl=sa&curr=SAR&ts=${gts(j.date, addDays(j.date, 1))}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -117,8 +141,26 @@ async function google(p, j) {
   if (only.includes('booking')) { res.booking = await pool(ctx, 3, DATES, booking, +(process.env.BUDGET_BOOKING || 9)); save(); console.log(KEY, 'booking', res.booking.filter(r => r.cards?.length).length, '/', DATES.length, Math.round((Date.now() - t0) / 1000) + 's'); }
   if (only.includes('agoda')) { res.agoda = await pool(ctx, 4, DATES, agoda, +(process.env.BUDGET_AGODA || 10)); save(); console.log(KEY, 'agoda', res.agoda.filter(r => r.cards?.length).length, '/', DATES.length, Math.round((Date.now() - t0) / 1000) + 's'); }
   if (only.includes('google')) {
-    const jobs = []; for (const d of DATES) for (const c of h.google) jobs.push({ key: c.key, id: c.id, date: d });
-    res.google = await pool(ctx, 6, jobs, google, +(process.env.BUDGET_GOOGLE || 16));
+    // nearest places: from the last published Booking.com + Agoda tables of this hotel (within the radius)
+    let prev = {}, gmap = {}; try { prev = JSON.parse(fs.readFileSync(process.env.PREV, 'utf8')); } catch {} try { gmap = JSON.parse(fs.readFileSync(process.env.GMAP, 'utf8')); } catch {}
+    const seen = new Map();
+    for (const sid of ['booking', 'agoda']) for (const r of (prev.tables?.[sid]?.rows || [])) { const k = toks(r.name).join(' '); if (!k || r.km == null || r.km > h.radius) continue; if (!seen.has(k) || seen.get(k).km > r.km) seen.set(k, { name: r.name, km: r.km }); }
+    const cand = [...seen.values()].sort((a, b) => a.km - b.km);
+    const own = h.google.find(c => c.seg === 'own'); const ents = []; const rp = await ctx.newPage(); res.gmap = {};
+    const now = Date.now();
+    for (const c of cand) {
+      if (ents.length >= 20 || gcaptcha >= 3) break;
+      let e = gmap[c.name];
+      if (!e || (e.id === null && now - (e.t || 0) > 7 * 864e5)) { let id; try { id = await resolve(rp, c.name); } catch { id = undefined; } if (id === undefined) continue; e = { id, t: now }; }
+      res.gmap[c.name] = e;
+      if (e.id && e.id !== own.id && !ents.find(x => x.id === e.id)) ents.push({ key: 'g' + ents.length, name: c.name, id: e.id, km: Math.round(c.km * 100) / 100, seg: 'near' });
+    }
+    await rp.close();
+    res.gents = [{ ...own, km: 0 }, ...ents];
+    console.log(KEY, 'google places', ents.length, 'of', cand.length, 'candidates');
+    const from = +(process.env.DAY_FROM || 0), to = +(process.env.DAY_TO || DATES.length);
+    const jobs = []; for (const d of DATES.slice(from, to)) for (const c of res.gents) jobs.push({ key: c.key, id: c.id, date: d });
+    res.google = await pool(ctx, 6, jobs, google, +(process.env.BUDGET_GOOGLE || 22));
     console.log(KEY, 'google', res.google.filter(r => r.offers?.length).length, '/', jobs.length, 'captcha', gcaptcha, Math.round((Date.now() - t0) / 1000) + 's');
   }
   res.finished = new Date().toISOString();

@@ -24,25 +24,34 @@ jobs:
       fail-fast: false
       matrix:
         hotel: [Heraa, Alzahraa, Vinas, Tulip]
+        part: [ota, g1, g2]        # ota = Booking.com + Agoda; g1/g2 = Google Hotels nights 1-16 / 17-31
     env:
       CHROME: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Collect 31 nights (Booking.com, Agoda, Google Hotels)
+      - name: Collect ${{ matrix.part }} for ${{ matrix.hotel }}
         timeout-minutes: 38
         continue-on-error: true
         run: |
           npm i --no-save --silent playwright-core@1.47.2
-          mkdir -p raw
-          node collect.cjs ${{ matrix.hotel }} raw/${{ matrix.hotel }}.json
+          mkdir -p raw prev
+          h=$(echo "${{ matrix.hotel }}" | tr 'A-Z' 'a-z')
+          curl -fsS "https://rates.swissblue.sa/data/$h.json" -o prev/hotel.json || true
+          curl -fsS "https://rates.swissblue.sa/data/gmap.json" -o prev/gmap.json || true
+          case "${{ matrix.part }}" in
+            ota) ONLY=booking,agoda node collect.cjs ${{ matrix.hotel }} raw/${{ matrix.hotel }}.ota.json ;;
+            g1)  ONLY=google DAY_FROM=0 DAY_TO=16 PREV=prev/hotel.json GMAP=prev/gmap.json node collect.cjs ${{ matrix.hotel }} raw/${{ matrix.hotel }}.g1.json ;;
+            g2)  ONLY=google DAY_FROM=16 DAY_TO=31 PREV=prev/hotel.json GMAP=prev/gmap.json node collect.cjs ${{ matrix.hotel }} raw/${{ matrix.hotel }}.g2.json ;;
+          esac
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: raw-${{ matrix.hotel }}
-          path: raw/${{ matrix.hotel }}.json
+          name: raw-${{ matrix.hotel }}-${{ matrix.part }}
+          path: raw/${{ matrix.hotel }}.${{ matrix.part }}.json
           retention-days: 3
+          if-no-files-found: ignore
 
   publish:
     needs: collect
@@ -63,7 +72,7 @@ jobs:
         run: |
           [ -n "${{ secrets.VERCEL_TOKEN }}" ] || { echo "::error::missing repository secret VERCEL_TOKEN"; exit 1; }
           mkdir -p prev out
-          for h in heraa alzahraa vinas tulip; do curl -fsS "https://rates.swissblue.sa/data/$h.json" -o "prev/$h.json" || rm -f "prev/$h.json"; done
+          for h in heraa alzahraa vinas tulip gmap; do curl -fsS "https://rates.swissblue.sa/data/$h.json" -o "prev/$h.json" || rm -f "prev/$h.json"; done
           python3 build.py raw prev out
           cp -r site/assets site/api site/vercel.json site/robots.txt out/
       - name: Deploy to Vercel (production)

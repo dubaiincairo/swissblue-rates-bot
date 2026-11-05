@@ -94,7 +94,10 @@
     "km": 3.2
    }
   ],
-  "agoda_city": 9777
+  "agoda_city": 9777,
+  "agoda_areas": [
+   495879
+  ]
  },
  "Alzahraa": {
   "label": "Alzahraa",
@@ -191,7 +194,10 @@
     "km": 2.7
    }
   ],
-  "agoda_city": 9777
+  "agoda_city": 9777,
+  "agoda_areas": [
+   495952
+  ]
  },
  "Vinas": {
   "label": "Vinas",
@@ -274,7 +280,10 @@
     "km": 2.7
    }
   ],
-  "agoda_city": 5349
+  "agoda_city": 5349,
+  "agoda_areas": [
+   496004
+  ]
  },
  "Tulip": {
   "label": "Tulip",
@@ -282,7 +291,7 @@
   "kind": "Serviced apartments",
   "lat": 24.73318,
   "lon": 46.78437,
-  "radius": 3.0,
+  "radius": 5.0,
   "agoda_area": 515109,
   "agoda_own": 439457,
   "google": [
@@ -350,6 +359,10 @@
     "km": 7.6
    }
   ],
-  "agoda_city": 5349
+  "agoda_city": 5349,
+  "agoda_areas": [
+   515109,
+   496004
+  ]
  }
 }

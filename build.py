@@ -90,7 +90,7 @@ def google_offers(raw):
 def t_google(k, raw, pick):
     """pick(offers_dict) -> (value, tip) or None. Rows = hand-picked competitors (Google Hotels)."""
     h = H[k]; G = google_offers(raw); own, rows = {}, []
-    for c in h['google']:
+    for c in (raw.get('gents') or h['google']):
         e = {'name': c['name'], 'km': c.get('km'), 'seg': c['seg'], 'p': {}, 'u': {}, 't': {}}
         for d, offers in (G.get(c['key']) or {}).items():
             got = pick(offers)
@@ -165,7 +165,7 @@ def table(tab, dates, label, src_name, rowlink):
         meta = []
         if e.get('km') is not None: meta.append(f'{int(e["km"] * 1000)} m' if e['km'] < 1 else f'{e["km"]:.1f} km')
         if e.get('score'): meta.append(f'★ {e["score"]:.1f}')
-        if e.get('seg'): meta.append('direct' if e['seg'].startswith('direct') else 'indirect')
+        if e.get('seg') in ('direct', 'indirect') or str(e.get('seg', '')).startswith(('direct', 'indirect')): meta.append('direct' if e['seg'].startswith('direct') else 'indirect')
         nm = a(first, E(e['name']) + EXT, f'Open on {src_name}')
         rows += f'<tr><th scope="row" class="nm"><span>{nm}</span><small>{" · ".join(meta)}</small></th>{cells(e)}</tr>'
     if not rows: rows = f'<tr><td class="none" colspan="{len(dates) + 1}">No prices this time.</td></tr>'
@@ -193,20 +193,20 @@ def hotel_page(k, D, nav):
             ('Price shown', "Agoda's cheapest room for that night, 2 adults, <strong>without</strong> VAT and fees (Agoda's own \"price before taxes\")."),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us that night. <span class="sw we"></span> Shaded columns = Thursday and Friday.'),
             ('Links', 'Click a name or a price to open that place on Agoda for that night.')]),
-        ('expedia', 'Hand-picked competitors on Expedia', 'Google Hotels', [
-            ('Who is compared', 'Hand-picked direct and indirect competitors (pricing doc, section 9).'),
+        ('expedia', 'Nearest places on Expedia', 'Google Hotels', [
+            ('Who is compared', f'The 20 nearest places within {h["radius"]:g} km of {E(h["label"])} (taken from the Booking.com and Agoda lists) that have a Google Hotels page.'),
             ('Price shown', "Expedia's cheapest room for that night, <strong>without</strong> VAT and fees. If Expedia has no price that night we show Hotels.com: it belongs to Expedia and sells the same rooms."),
             ('Where it comes from', "Expedia blocks robots on its own website, so we read Expedia's price from Google Hotels. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875) to compare the same way as the other tables."),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than us on Expedia that night.'),
             ('Links', 'Click a name or a price to open Google Hotels for that night: it lists every platform with a "Visit site" button.')]),
         ('avg', 'Average of 5 platforms', 'Google Hotels', [
-            ('Who is compared', 'Hand-picked direct and indirect competitors (pricing doc, section 9).'),
+            ('Who is compared', f'The same 20 nearest places as the Expedia table (within {h["radius"]:g} km).'),
             ('Price shown', 'For each place: the average of its cheapest room on <strong>Booking.com, Agoda, Expedia, Hotels.com and Trip.com</strong> (only the platforms that have a price that night), <strong>without</strong> VAT and fees. Hover a price to see each platform.'),
             ('Where it comes from', 'Google Hotels, which lists every platform for each place. Google shows prices <strong>with</strong> 15% VAT and 2.5% municipality fee, so we remove them (Google price ÷ 1.17875).'),
             ('Colours', '<span class="sw lo"></span> Red = cheaper than our own 5-platform average that night.'),
             ('Links', 'Click a name or a price to open Google Hotels for that night: it lists every platform with a "Visit site" button.')]),
     ]
-    jump = ''.join(f'<a href="#{sid}">{E(title.replace("All nearby places on ", "").replace("Hand-picked competitors on ", ""))}</a>' for sid, title, _, _ in spec)
+    jump = ''.join(f'<a href="#{sid}">{E(title.replace("All nearby places on ", "").replace("Nearest places on ", ""))}</a>' for sid, title, _, _ in spec)
     for sid, title, src, items in spec:
         tab = D['tables'].get(sid)
         upd = D['updated_by'].get(sid)
@@ -266,12 +266,25 @@ def home(all_D):
 <div class="hgrid">{cards}</div>'''
     return page('Competitor prices', None, None, body, upd, root=True)
 
+GMAP = {}
 def main():
     raw_dir, prev_dir, site = sys.argv[1:4]
+    try: GMAP.update(json.load(open(os.path.join(prev_dir, 'gmap.json'))))
+    except Exception: pass
     all_D = {}
     for k in H:
-        try: raw = json.load(open(os.path.join(raw_dir, f'{k}.json')))
-        except Exception: raw = {}
+        raw = {}
+        for fn in sorted(os.listdir(raw_dir)) if os.path.isdir(raw_dir) else []:
+            if not (fn == f'{k}.json' or fn.startswith(f'{k}.')) or not fn.endswith('.json'): continue
+            try: part = json.load(open(os.path.join(raw_dir, fn)))
+            except Exception: continue
+            for key in ('booking', 'agoda'):
+                if part.get(key): raw[key] = part[key]
+            if part.get('google'): raw['google'] = (raw.get('google') or []) + part['google']
+            if part.get('gents'): raw['gents'] = part['gents']
+            if part.get('gmap'): GMAP.update(part['gmap'])
+            for key in ('dates', 'finished'):
+                if part.get(key) and (key == 'dates' or part[key] > raw.get(key, '')): raw[key] = part[key]
         try: prev = json.load(open(os.path.join(prev_dir, f'{k.lower()}.json')))
         except Exception: prev = {}
         dates = raw.get('dates') or prev.get('dates')
@@ -295,6 +308,7 @@ def main():
         os.makedirs(os.path.join(site, k.lower()), exist_ok=True)
         open(os.path.join(site, k.lower(), 'index.html'), 'w').write(hotel_page(k, D, None))
     open(os.path.join(site, 'index.html'), 'w').write(home(all_D))
+    json.dump(GMAP, open(os.path.join(site, 'data', 'gmap.json'), 'w'), ensure_ascii=False)
     print('built', ', '.join(all_D))
 
 if __name__ == '__main__':
