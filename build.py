@@ -1,7 +1,9 @@
 """Build the rates site from raw/<Hotel>.json files (one per hotel, from collect.cjs).
 Usage: python3 build.py raw_dir prev_dir site_dir
 prev_dir holds the last published data/<hotel>.json; a source that failed this run keeps its last good table."""
-import json, os, re, sys, math, html, datetime, statistics as st, base64
+import json, os, re, sys, math, html, datetime, shutil, statistics as st, base64
+# Phones never see the pages: site/vercel.json redirects them, this catches desktop-site mode on a phone.
+GUARD = "<script>/* Phones never see this page, even in desktop-site mode: small touch screens go to mobile.html. */(function(){try{var s=Math.min(screen.width,screen.height);if(/iPhone|iPod|Android.+Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini/.test(navigator.userAgent)||(s<600&&navigator.maxTouchPoints>0))location.replace('/mobile.html');}catch(e){}})();</script>"
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo('Asia/Riyadh')
@@ -255,7 +257,7 @@ def page(title, nav, active, body, updated, root=False):
     pre = '' if root else '../'
     tabs = ''.join(f'<a href="{pre}{kk.lower()}/" {"aria-current=page" if kk == active else ""}>{E(H[kk]["label"])}</a>' for kk in H)
     sync = SYNC.format(iso=updated, txt=fmt_t(updated))
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">{GUARD}<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow, noarchive"><title>{E(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{pre}assets/site.css"></head><body>
@@ -327,6 +329,7 @@ def main():
         os.makedirs(os.path.join(site, k.lower()), exist_ok=True)
         open(os.path.join(site, k.lower(), 'index.html'), 'w').write(hotel_page(k, D, None))
     open(os.path.join(site, 'index.html'), 'w').write(home(all_D))
+    shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site', 'mobile.html'), os.path.join(site, 'mobile.html'))   # the phone screen
     json.dump(GMAP, open(os.path.join(site, 'data', 'gmap.json'), 'w'), ensure_ascii=False)
     print('built', ', '.join(all_D))
 

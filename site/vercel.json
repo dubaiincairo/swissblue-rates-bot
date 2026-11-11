@@ -1,7 +1,40 @@
 {
  "cleanUrls": true,
- "headers": [{ "source": "/(.*)", "headers": [
-  { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
-  { "key": "Referrer-Policy", "value": "no-referrer" },
-  { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" } ] }]
+ "headers": [
+  {
+   "source": "/(.*)",
+   "headers": [
+    {
+     "key": "X-Robots-Tag",
+     "value": "noindex, nofollow, noarchive"
+    },
+    {
+     "key": "Referrer-Policy",
+     "value": "no-referrer"
+    },
+    {
+     "key": "Cache-Control",
+     "value": "public, max-age=0, must-revalidate"
+    },
+    {
+     "key": "Vary",
+     "value": "User-Agent"
+    }
+   ]
+  }
+ ],
+ "redirects": [
+  {
+   "source": "/((?!mobile$|mobile\\.html$|robots\\.txt$|api/|data/|assets/).*)",
+   "has": [
+    {
+     "type": "header",
+     "key": "user-agent",
+     "value": ".*(iPhone|iPod|Android.+Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini).*"
+    }
+   ],
+   "destination": "/mobile",
+   "permanent": false
+  }
+ ]
 }
